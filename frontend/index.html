@@ -29,10 +29,15 @@
             margin-bottom: 30px;
         }
 
-        textarea {
+        textarea,
+        input[type="file"] {
             width: 100%;
-            padding: 15px;
             box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            padding: 15px;
             border-radius: 8px;
             border: 1px solid #ccc;
             font-size: 16px;
@@ -41,7 +46,7 @@
         button {
             width: 100%;
             padding: 14px;
-            margin-top: 15px;
+            margin-top: 10px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -76,12 +81,14 @@
         <h1>🛡️ SmartPay Guard</h1>
 
         <p class="subtitle">
-            Analyze suspicious messages and identify potential scam risks.
+            Analyze suspicious messages or text files.
         </p>
+
+        <h3>Analyze a Message</h3>
 
         <textarea
             id="message"
-            rows="7"
+            rows="6"
             placeholder="Paste or type a suspicious message here..."
         ></textarea>
 
@@ -89,48 +96,125 @@
             Analyze Message
         </button>
 
+        <hr>
+
+        <h3>Analyze a Text File</h3>
+
+        <input
+            type="file"
+            id="fileInput"
+            accept=".txt"
+        >
+
+        <button onclick="analyzeFile()">
+            Upload and Analyze File
+        </button>
+
         <div id="result">
-            No message analyzed yet.
+            No message or file analyzed yet.
         </div>
 
     </div>
 
     <script>
+        function displayResult(data) {
+            const resultDiv = document.getElementById("result");
+
+            resultDiv.className = "";
+
+            resultDiv.innerText =
+                "Risk Score: " + data.risk_score +
+                "\nRisk Level: " + data.risk_level +
+                "\nReasons: " + data.reasons.join(", ");
+
+            if (data.risk_level === "LOW") {
+                resultDiv.classList.add("low");
+            } else if (data.risk_level === "SUSPICIOUS") {
+                resultDiv.classList.add("suspicious");
+            } else if (data.risk_level === "HIGH") {
+                resultDiv.classList.add("high");
+            }
+        }
+
+
         async function analyzeMessage() {
             const message = document.getElementById("message").value;
             const resultDiv = document.getElementById("result");
 
             resultDiv.className = "";
-            resultDiv.innerText = "Analyzing...";
+            resultDiv.innerText = "Analyzing message...";
 
             try {
-                const response = await fetch("http://127.0.0.1:8000/analyze", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: message
-                    })
-                });
+                const response = await fetch(
+                    "http://127.0.0.1:8000/analyze",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: message
+                        })
+                    }
+                );
+
+                const data = await response.json();
+                displayResult(data);
+
+            } catch (error) {
+                resultDiv.innerText =
+                    "Error connecting to the backend.";
+                console.error(error);
+            }
+        }
+
+
+        async function analyzeFile() {
+            const fileInput =
+                document.getElementById("fileInput");
+
+            const resultDiv =
+                document.getElementById("result");
+
+            if (fileInput.files.length === 0) {
+                resultDiv.innerText =
+                    "Please select a .txt file first.";
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append(
+                "file",
+                fileInput.files[0]
+            );
+
+            resultDiv.className = "";
+            resultDiv.innerText = "Analyzing file...";
+
+            try {
+                const response = await fetch(
+                    "http://127.0.0.1:8000/analyze-file",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
 
                 const data = await response.json();
 
-                resultDiv.innerText =
-                    "Risk Score: " + data.risk_score +
-                    "\nRisk Level: " + data.risk_level +
-                    "\nReasons: " + data.reasons.join(", ");
-
-                if (data.risk_level === "LOW") {
-                    resultDiv.classList.add("low");
-                } else if (data.risk_level === "SUSPICIOUS") {
-                    resultDiv.classList.add("suspicious");
-                } else if (data.risk_level === "HIGH") {
-                    resultDiv.classList.add("high");
+                if (!response.ok) {
+                    resultDiv.innerText =
+                        "Error: " +
+                        (data.detail || "Unable to analyze file.");
+                    return;
                 }
 
+                displayResult(data);
+
             } catch (error) {
-                resultDiv.innerText = "Error connecting to the backend.";
+                resultDiv.innerText =
+                    "Error connecting to the backend.";
                 console.error(error);
             }
         }
