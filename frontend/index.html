@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartPay Guard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 12px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            white-space: pre-line;
+            border-radius: 8px;
+        }
+
+        .low {
+            background-color: #d4edda;
+        }
+
+        .suspicious {
+            background-color: #fff3cd;
+        }
+
+        .high {
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🛡️ SmartPay Guard</h1>
+
+        <p class="subtitle">
+            Analyze suspicious messages and identify potential scam risks.
+        </p>
+
+        <textarea
+            id="message"
+            rows="7"
+            placeholder="Paste or type a suspicious message here..."
+        ></textarea>
+
+        <button onclick="analyzeMessage()">
+            Analyze Message
+        </button>
+
+        <div id="result">
+            No message analyzed yet.
+        </div>
+
+    </div>
+
+    <script>
+        async function analyzeMessage() {
+            const message = document.getElementById("message").value;
+            const resultDiv = document.getElementById("result");
+
+            resultDiv.className = "";
+            resultDiv.innerText = "Analyzing...";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                resultDiv.innerText =
+                    "Risk Score: " + data.risk_score +
+                    "\nRisk Level: " + data.risk_level +
+                    "\nReasons: " + data.reasons.join(", ");
+
+                if (data.risk_level === "LOW") {
+                    resultDiv.classList.add("low");
+                } else if (data.risk_level === "SUSPICIOUS") {
+                    resultDiv.classList.add("suspicious");
+                } else if (data.risk_level === "HIGH") {
+                    resultDiv.classList.add("high");
+                }
+
+            } catch (error) {
+                resultDiv.innerText = "Error connecting to the backend.";
+                console.error(error);
+            }
+        }
+    </script>
+
+</body>
+</html>
