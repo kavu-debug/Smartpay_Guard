@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from analyzer import analyze_message
+from backend.analyzer import analyze_message
 
 app = FastAPI()
 
