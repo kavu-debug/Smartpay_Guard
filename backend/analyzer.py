@@ -5,34 +5,74 @@ def analyze_message(message):
     reasons = []
 
     # Prize or winning scams
-    if "won" in message_lower or "prize" in message_lower:
+    prize_keywords = ["won", "winner", "prize", "lottery", "reward", "congratulations"]
+    if any(keyword in message_lower for keyword in prize_keywords):
         risk_score += 25
         reasons.append("Unexpected prize or winning message")
 
     # Payment requests
-    if "pay" in message_lower or "fee" in message_lower:
+    payment_keywords = [
+        "pay", "payment", "fee", "transfer",
+        "send money", "deposit"
+    ]
+    if any(keyword in message_lower for keyword in payment_keywords):
         risk_score += 25
         reasons.append("Requests money or a payment")
 
     # Urgency
-    if "urgent" in message_lower or "immediately" in message_lower:
+    urgency_keywords = [
+        "urgent", "immediately", "now",
+        "limited time", "act fast"
+    ]
+    if any(keyword in message_lower for keyword in urgency_keywords):
         risk_score += 20
-        reasons.append("Creates urgency")
+        reasons.append("Creates urgency or pressure")
 
     # Suspicious links
-    if "click" in message_lower or "link" in message_lower:
+    link_keywords = [
+        "click", "link", "http://", "https://",
+        "verify here"
+    ]
+    if any(keyword in message_lower for keyword in link_keywords):
         risk_score += 20
-        reasons.append("Contains a request to click a link")
+        reasons.append("Contains a request or link to click")
 
-    # New pattern: account threats
-    if "account blocked" in message_lower or "account suspended" in message_lower:
+    # Account threats
+    account_threats = [
+        "account blocked",
+        "account suspended",
+        "account will be closed",
+        "verify your account"
+    ]
+    if any(keyword in message_lower for keyword in account_threats):
         risk_score += 25
-        reasons.append("Threatens account suspension or blocking")
+        reasons.append("Threatens account suspension or requests verification")
 
-    # New pattern: requests sensitive information
-    if "otp" in message_lower or "password" in message_lower:
+    # Sensitive information
+    sensitive_keywords = [
+        "otp",
+        "password",
+        "pin",
+        "cvv",
+        "card number"
+    ]
+    if any(keyword in message_lower for keyword in sensitive_keywords):
         risk_score += 25
-        reasons.append("Requests sensitive information")
+        reasons.append("Requests or mentions sensitive information")
+
+    # Impersonation patterns
+    impersonation_keywords = [
+        "bank representative",
+        "customer support",
+        "government official",
+        "income tax department"
+    ]
+    if any(keyword in message_lower for keyword in impersonation_keywords):
+        risk_score += 20
+        reasons.append("May impersonate an organization or authority")
+
+    # Cap the maximum score
+    risk_score = min(risk_score, 100)
 
     # Decide the risk level
     if risk_score >= 50:
