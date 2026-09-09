@@ -2,9 +2,9 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from backend.analyzer import analyze_message
-
+from datetime import datetime
 app = FastAPI()
-
+analysis_history = []
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,16 +22,22 @@ class MessageRequest(BaseModel):
 def home():
     return {"message": "Welcome to SmartPay Guard API"}
 
-
 @app.post("/analyze")
 def analyze(request: MessageRequest):
     risk_score, risk_level, reasons = analyze_message(request.message)
 
-    return {
+    result = {
+        "type": "message",
+        "content": request.message,
         "risk_score": risk_score,
         "risk_level": risk_level,
-        "reasons": reasons
+        "reasons": reasons,
+        "timestamp": datetime.now().isoformat()
     }
+
+    analysis_history.append(result)
+
+    return result
 
 
 @app.post("/analyze-file")
@@ -53,11 +59,20 @@ async def analyze_file(file: UploadFile = File(...)):
             detail="The file must be a valid UTF-8 text file."
         )
 
-    risk_score, risk_level, reasons = analyze_message(message)
+        risk_score, risk_level, reasons = analyze_message(message)
 
-    return {
+    result = {
+        "type": "file",
         "filename": file.filename,
         "risk_score": risk_score,
         "risk_level": risk_level,
-        "reasons": reasons
+        "reasons": reasons,
+        "timestamp": datetime.now().isoformat()
     }
+
+    analysis_history.append(result)
+
+    return result
+@app.get("/history")
+def get_history():
+    return analysis_history
