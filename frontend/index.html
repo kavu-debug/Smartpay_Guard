@@ -71,6 +71,21 @@
         .high {
             background-color: #f8d7da;
         }
+.history-item {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.history-item h4 {
+    margin-top: 0;
+}
+
+.history-item p {
+    margin: 6px 0;
+}
     </style>
 </head>
 
@@ -253,7 +268,7 @@ resultDiv.innerText = "Analyzing file...";
    async function loadHistory() {
     const historyDiv = document.getElementById("history");
 
-    historyDiv.innerText = "Loading history...";
+    historyDiv.innerHTML = "Loading history...";
 
     try {
         const response = await fetch(
@@ -263,28 +278,30 @@ resultDiv.innerText = "Analyzing file...";
         const history = await response.json();
 
         if (history.length === 0) {
-            historyDiv.innerText = "No analysis history yet.";
+            historyDiv.innerHTML = "No analysis history yet.";
             return;
         }
 
-        historyDiv.innerText = history.map((item, index) => {
-            return (
-                "Analysis " + (index + 1) +
-                "\nType: " + item.type +
-                "\nRisk Score: " + item.risk_score +
-                "\nRisk Level: " + item.risk_level +
-                "\nReasons: " + item.reasons.join(", ") +
-                "\nTime: " + item.timestamp +
-                "\n--------------------"
-            );
-        }).join("\n");
-        
+        historyDiv.innerHTML = history.map((item, index) => {
+            return `
+                <div class="history-item">
+                    <h4>Analysis ${index + 1}</h4>
+                    <p><strong>Type:</strong> ${item.type}</p>
+                    ${item.filename ? `<p><strong>File:</strong> ${item.filename}</p>` : ""}
+                    <p><strong>Risk Score:</strong> ${item.risk_score}</p>
+                    <p><strong>Risk Level:</strong> ${item.risk_level}</p>
+                    <p><strong>Reasons:</strong> ${item.reasons.join(", ")}</p>
+                    <p><strong>Time:</strong> ${item.timestamp}</p>
+                </div>
+            `;
+        }).join("");
+
     } catch (error) {
-        historyDiv.innerText =
+        historyDiv.innerHTML =
             "Error loading analysis history.";
         console.error(error);
     }
-} 
+}
 </script>
 
 </body>
