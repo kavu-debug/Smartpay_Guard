@@ -111,7 +111,17 @@
                 <div id="result">
             No message or file analyzed yet.
         </div>
+  <hr>
 
+<h3>Analysis History</h3>
+
+<button onclick="loadHistory()">
+    Refresh History
+</button>
+
+<div id="history">
+    No analysis history yet.
+</div>
     </div>
 
     <script>
@@ -240,7 +250,42 @@ resultDiv.innerText = "Analyzing file...";
     fileButton.innerText = "Upload and Analyze File";
 }     
  }
-    </script>
+   async function loadHistory() {
+    const historyDiv = document.getElementById("history");
+
+    historyDiv.innerText = "Loading history...";
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/history"
+        );
+
+        const history = await response.json();
+
+        if (history.length === 0) {
+            historyDiv.innerText = "No analysis history yet.";
+            return;
+        }
+
+        historyDiv.innerText = history.map((item, index) => {
+            return (
+                "Analysis " + (index + 1) +
+                "\nType: " + item.type +
+                "\nRisk Score: " + item.risk_score +
+                "\nRisk Level: " + item.risk_level +
+                "\nReasons: " + item.reasons.join(", ") +
+                "\nTime: " + item.timestamp +
+                "\n--------------------"
+            );
+        }).join("\n");
+        
+    } catch (error) {
+        historyDiv.innerText =
+            "Error loading analysis history.";
+        console.error(error);
+    }
+} 
+</script>
 
 </body>
 </html>
